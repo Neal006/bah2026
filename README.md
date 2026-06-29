@@ -7,6 +7,8 @@
 
 This project delivers a complete, real-time software pipeline for a Shack-Hartmann Wavefront Sensor (SH-WFS) operating under simulated atmospheric turbulence. Given 200 frames from a 10×10 lenslet array camera running at 200 Hz, the pipeline reconstructs the wavefront phase, estimates the atmospheric coherence parameters (Fried parameter r₀ and coherence time τ₀), and outputs deformable mirror (DM) actuator stroke commands — all within a 5 ms per-frame real-time budget. The solution pairs the pipeline with a live digital twin dashboard that plays back the sensor stream in real time, visualising every processing stage simultaneously.
 
+**Live demo:** https://alpha-aveonix.streamlit.app/
+
 **Key results:**
 
 | Metric | Achieved | Target |
@@ -254,10 +256,10 @@ CoG sensitivity loss (~6×)      Flat-field calibration gain restores linearity
 - [x] P7 — Rolling phase RMS history (50 frames) with GT reference line
 - [x] P8 — Rolling r₀ estimate history with GT reference line
 - [x] P9 — Per-frame pipeline latency (colour-coded: blue < 5 ms, red ≥ 5 ms)
-- [x] P10 — Live scalar metrics strip: τ₀, r₀, DM saturation, latency, slope correlation
+- [x] P10 — Full-width horizontal metrics strip below graphs: τ₀, r₀, DM saturation, latency, slope correlation
 - [x] Playback speed control (0.1× – 20×)
 - [x] Play / Pause / Step / Reset controls
-- [x] Streamlit Community Cloud deployable
+- [x] Live at https://alpha-aveonix.streamlit.app/
 
 ---
 
@@ -368,16 +370,17 @@ CoG sensitivity loss (~6×)      Flat-field calibration gain restores linearity
 
 | Layer | Technology | Why |
 |-------|-----------|-----|
-| Numerical core | NumPy 1.26 | BLAS-backed GEMV; the only library needed at runtime |
+| Numerical core | NumPy | BLAS-backed GEMV; the only library needed at runtime |
 | Image I/O | Pillow | BMP decode without OpenCV dependency in core pipeline |
 | Centroiding (fast path) | C extension (GCC / MinGW) | Eliminates interpreter overhead in the pixel loop |
 | Matrix precomputation | NumPy `linalg.pinv` (LAPACK) | Moore-Penrose pseudo-inverse; one-time cost |
-| Dashboard | Streamlit 1.35 | Fastest path to browser-based interactive UI; zero JS |
-| Charts (dashboard) | Plotly (go.Heatmap, go.Bar, go.Scatter) | GPU-accelerated canvas rendering; `st.plotly_chart` is zero-copy |
-| Sensor overlay | OpenCV headless | cv2 circle/line on numpy arrays; `opencv-python-headless` for Cloud |
+| Dashboard | Streamlit | Fastest path to browser-based interactive UI; zero JS |
+| Charts (dashboard) | Plotly (`go.Heatmap`, `go.Bar`, `go.Scatter`) | GPU-accelerated canvas rendering; `st.plotly_chart` is zero-copy |
+| Sensor overlay | OpenCV headless | cv2 circle/line on numpy arrays; `opencv-python-headless` required on Cloud |
 | Slope quiver | Matplotlib (Agg backend) | Plotly has no native coloured quiver; matplotlib fills the gap |
 | Deployment | Streamlit Community Cloud | Zero cost, zero infrastructure, GitHub-native |
-| Language | Python 3.10+ | Universal, NumPy-native, fast enough with precomputed matrices |
+| Python runtime | **Python 3.11** (pinned via `runtime.txt`) | Ensures `X \| Y` union type hints evaluate correctly on Cloud |
+| Type annotations | `from __future__ import annotations` | Defers annotation evaluation — Cloud-safe regardless of host Python version |
 
 ---
 
@@ -425,7 +428,7 @@ At the 200 Hz frame rate and 2.2 ms mean latency, **a single CPU core is suffici
 
 | Limitation | Detail |
 |-----------|--------|
-| C extension bitness | MinGW 6.3.0 on this machine is 32-bit; Python 3.13 is 64-bit. The C extension DLL fails to load. NumPy fallback runs at the same 2.2 ms benchmark — but the C path requires `mingw-w64` for a proper fix |
+| C extension bitness | MinGW 6.3.0 on dev machine is 32-bit; Python 3.11 is 64-bit. The C extension DLL fails to load on Windows. NumPy fallback runs at the same 2.2 ms benchmark. Requires `mingw-w64` for a proper fix; not an issue on Linux (Streamlit Cloud) |
 | Wind speed source | τ₀ estimation uses `v_wind` from system metadata. In a real observatory this requires cross-correlation of slope sequences (SLODAR) to estimate from sensor data alone |
 | Slope correlation | 0.783 vs GT. CoG with an oversize PSF is inherently limited in SNR; the gain-correction partially recovers this but cannot fully restore photon-noise-limited sensitivity |
 | 200-frame dataset | One second of simulated turbulence. Statistics (r₀ estimate) converge after ~20 frames but the rolling window does not capture longer timescale turbulence evolution |
@@ -557,12 +560,14 @@ Zernike coefficients are fitted to the full pupil wavefront using the same inter
 
 ## Reproducibility
 
+### Local setup
+
 ```bash
 # 1. Clone and enter the pipeline directory
 git clone https://github.com/<your-username>/bah2026.git
 cd bah2026/shwfs_pipeline
 
-# 2. Install dependencies
+# 2. Install dependencies (Python 3.11 recommended)
 pip install -r requirements.txt
 
 # 3. Build all matrices (one-time, ~10 s)
@@ -582,7 +587,25 @@ streamlit run dashboard/shwfs_dashboard.py
 # → http://localhost:8501
 ```
 
-All code is pure Python 3.10+ with NumPy and Pillow as the only runtime dependencies for the core pipeline. The dashboard additionally requires Streamlit, Plotly, OpenCV (headless), and Matplotlib.
+### Streamlit Community Cloud deployment
+
+The app is live at **https://alpha-aveonix.streamlit.app/**
+
+To deploy your own instance:
+
+1. Push the repo to GitHub (dataset and precomputed matrices are committed — ~8 MB total)
+2. Go to [share.streamlit.io](https://share.streamlit.io) → **New app**
+3. Set **Main file path** to `shwfs_pipeline/dashboard/shwfs_dashboard.py`
+4. Click **Deploy** — Cloud installs from `requirements.txt` at the repo root automatically
+
+**Key deployment files in the repo root:**
+
+| File | Purpose |
+|------|---------|
+| `requirements.txt` | Python dependencies installed by Streamlit Cloud |
+| `runtime.txt` | Pins Python 3.11 (`python-3.11`) — required for `X \| Y` type hint syntax |
+
+All code is Python 3.11 with NumPy and Pillow as the only runtime dependencies for the core pipeline. The dashboard additionally requires Streamlit, Plotly, OpenCV (headless), and Matplotlib.
 
 ---
 
