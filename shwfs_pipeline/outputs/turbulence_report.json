@@ -1,0 +1,8 @@
+{
+  "r0_estimated_mm": 2.8946,
+  "r0_gt_mm": 3.087,
+  "tau0_estimated_ms": 18.1782,
+  "tau0_gt_ms": 19.385,
+  "phase_rms_mean_rad": 0.12844855759292842,
+  "phase_rms_std_rad": 0.029401434355876572
+}

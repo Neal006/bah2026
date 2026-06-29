@@ -1,0 +1,201 @@
+================================================================================
+DATA CONTEXT — shwfs_synthetic dataset
+BAH 2026 Problem Statement 9 — SH-WFS Pipeline
+Generated: 2026-06-28
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────────
+1. DATASET OVERVIEW
+────────────────────────────────────────────────────────────────────────────────
+Description : Synthetic SH-WFS time-series — BAH 2026 Problem Statement 9
+Generator   : shwfs_synth_gen.py v2.0.0
+Root path   : C:\Users\Admin\bah2026\shwfs_synthetic\
+Total size  : ~6.2 MB
+Format      : 200 BMP frames + NumPy arrays + JSON ground truth
+
+────────────────────────────────────────────────────────────────────────────────
+2. HARDWARE PARAMETERS (from metadata.json)
+────────────────────────────────────────────────────────────────────────────────
+
+MLA (Micro-Lens Array)
+  n_lenslets_x            = 10
+  n_lenslets_y            = 10
+  pitch_m                 = 1.5e-4  (150 µm)
+  focal_length_m          = 0.0186  (18.6 mm)
+  n_subapertures_active   = 80      (circular pupil excludes 20 corner lenslets)
+
+Camera
+  frame_width_px          = 160
+  frame_height_px         = 160
+  pixel_size_m            = 5.5e-6  (5.5 µm)
+  pixels_per_subaperture  = 16      (16×16 px window per lenslet)
+  bit_depth               = 8
+  frame_rate_hz           = 200.0   (→ 5.0 ms hard real-time budget per frame)
+  frame_interval_ms       = 5.0
+  readout_noise_e         = 3.0
+  full_well_e             = 30000
+
+Pupil
+  diameter_m              = 1.5e-3  (1.5 mm)
+  shape                   = circular
+  R_pupil                 = 7.5e-4  m  (for Zernike normalization)
+
+Deformable Mirror (DM)
+  n_actuators_x           = 11
+  n_actuators_y           = 11
+  n_actuators_total       = 121
+  pitch_m                 = 1.5e-4  (150 µm, same pitch as lenslets)
+  stroke_m                = 5e-6    (±5 µm)
+  coupling_fraction       = 0.15
+  geometry                = Fried — lenslet centres at midpoints of actuator quad
+  coupling_file_npy       = dm_coupling.npy
+  coupling_file_mat       = dm_coupling.mat
+
+Turbulence / Optics
+  model                   = Von Karman / Kolmogorov (Fourier + 3 subharmonic levels)
+  r0_input_m              = 4.0e-3   (4.0 mm — what was requested)
+  r0_measured_mm          = 3.087    (what the generator actually produced; ~23% lower)
+  L0_m                    = 0.1      (outer scale)
+  wavelength_m            = 6.328e-7 (632.8 nm, He-Ne laser)
+  wind_speed_ms           = 0.05
+  wind_angle_deg          = 30.0
+  tau0_measured_ms        = 19.385   (coherence time at measured r0 and wind speed)
+
+Zernike
+  ordering                = Noll (1976)
+  n_modes                 = 21  (Z1 piston through Z21)
+  units                   = radians
+  NOTE: Z1 (piston) is NOT sensed by SH-WFS (global phase shift, no slope)
+
+────────────────────────────────────────────────────────────────────────────────
+3. FILE MANIFEST
+────────────────────────────────────────────────────────────────────────────────
+
+ROOT LEVEL
+  metadata.json           — All hardware parameters (source of truth for config.py)
+  sh_flat_ref.bmp         — Reference (flat wavefront) frame, 160×160 px, 8-bit
+  sh_flat_bg.bmp          — Background / dark frame, 160×160 px, 8-bit
+  sh_flat.mat             — Reference frame in MATLAB format (legacy compat)
+  sh_flat_bg.mat          — Background frame in MATLAB format (legacy compat)
+  img.mat                 — Example turbulated frame in MATLAB format
+  dm_coupling.npy         — DM inter-actuator coupling matrix, shape (121,121), float32
+  dm_coupling.mat         — Same matrix in MATLAB format
+
+frames/
+  frame_0000.bmp          — Turbulated SH-WFS frame at t=0.000 s
+  frame_0001.bmp          — t=0.005 s
+  ...
+  frame_0199.bmp          — t=0.995 s  (200 frames total, 200 Hz, 1.0 s duration)
+  Each file: 160×160 px, 8-bit grayscale BMP, ~26.7 KB
+
+ground_truth/
+  all_slopes_x.npy        — shape (200, 10, 10) float32 — x-slopes on full 10×10 grid
+                            Inactive subapertures (outside pupil) have value 0.
+                            Units: θ_x = Δx_m / f_MLA [radians, dimensionless tilt]
+  all_slopes_y.npy        — shape (200, 10, 10) float32 — y-slopes, same convention
+  all_zernike.npy         — shape (200, 21) float32 — Zernike coefficients per frame [rad]
+                            Row i → frame i. Columns → Z1..Z21 in Noll order.
+  per_frame.json          — 200-entry array; each entry:
+                            { "frame": int, "time_s": float, "offset_x_m": float,
+                              "offset_y_m": float, "phase_rms_rad": float,
+                              "zernike_noll": [21 floats] }
+  turbulence_stats.json   — Summary stats: r0_input_mm, r0_measured_mm, tau0_measured_ms,
+                            wind_speed_ms, wind_angle_deg, d_sa_m, wavelength_m
+
+────────────────────────────────────────────────────────────────────────────────
+4. ARRAY SHAPES AND SIZES (verified from file sizes)
+────────────────────────────────────────────────────────────────────────────────
+
+File                    | Bytes  | Header | Data bytes | Elements  | Shape
+------------------------|--------|--------|------------|-----------|----------
+dm_coupling.npy         | 58,692 |    128 |     58,564 |    14,641 | (121, 121) float32
+all_slopes_x.npy        | 80,128 |    128 |     80,000 |    20,000 | (200, 10, 10) float32
+all_slopes_y.npy        | 80,128 |    128 |     80,000 |    20,000 | (200, 10, 10) float32
+all_zernike.npy         | 16,928 |    128 |     16,800 |     4,200 | (200, 21) float32
+Each BMP frame          | 26,678 |  ~  54 |     25,600 |    25,600 | (160, 160) uint8
+
+NOTE: all_slopes stored on full 10×10 grid (not just 80 active SA).
+      Inactive corner subapertures are zero-filled.
+
+────────────────────────────────────────────────────────────────────────────────
+5. DERIVED CONSTANTS (computed from metadata)
+────────────────────────────────────────────────────────────────────────────────
+
+N_SLOPES        = 2 × 80 = 160   (x + y per active subaperture, flattened)
+G shape         = (160, 21)       (interaction matrix: slopes × modes)
+G_pinv shape    = (21, 160)       (pseudoinverse for online reconstruction)
+SLOPE_SCALE     = PIX_M / F_MLA_M = 5.5e-6 / 0.0186 = 2.957e-4  [rad/px]
+                  This converts centroid pixel displacement to tilt angle θ [rad]
+                  Full formula: θ_x = Δpx * SLOPE_SCALE = Δx_m / f_MLA
+GRID_DX_NORM    = 2 / (PUPIL_GRID - 1) = 2 / 63 ≈ 0.03175   (64-px grid span [-1,1])
+PHYS_SCALE      = wavelength / (2π × R_pupil)
+                = 6.328e-7 / (2π × 7.5e-4) = 1.344e-4
+                  Used to convert normalized Zernike gradient to physical slope [rad/rad]
+G_SCALE_FACTOR  = GRID_DX_NORM / PHYS_SCALE = 0.03175 / 1.344e-4 ≈ 236
+                  ⚠ CRITICAL: np.gradient(Z_basis) gives dZ/d(pixel_idx), not dZ/dx_phys.
+                  G matrix from np.gradient is 236× too large → Zernike coefficients
+                  from G_pinv @ slopes will be 236× too small → phase map off by same.
+                  FIX: multiply G by PHYS_SCALE / GRID_DX_NORM before taking pseudoinverse.
+
+────────────────────────────────────────────────────────────────────────────────
+6. FRAME 0 GROUND TRUTH SAMPLE (for validation baseline)
+────────────────────────────────────────────────────────────────────────────────
+
+frame           = 0
+time_s          = 0.0
+offset_x_m      = 0.0
+offset_y_m      = 0.0
+phase_rms_rad   = 0.2544
+zernike_noll    = [Z1=1.511, Z2=-2.813, Z3=8.968, Z4=-2.771, Z5=6.342,
+                   Z6=-1.954, Z7=-2.128, Z8=2.337, Z9=1.228, Z10=-0.248,
+                   Z11=-0.245, Z12=2.047, Z13=-1.059, Z14=0.772, Z15=0.768,
+                   Z16=-0.589, Z17=-0.869, Z18=-0.478, Z19=0.904, Z20=-0.007,
+                   Z21=1.234]
+
+Notable: Z3 (tilt) = 8.97 rad — very large due to wind drift across frame 0.
+         Z1 (piston) = 1.51 rad — SH-WFS cannot sense piston; exclude from RMSE.
+
+────────────────────────────────────────────────────────────────────────────────
+7. GROUND TRUTH TURBULENCE STATISTICS
+────────────────────────────────────────────────────────────────────────────────
+
+r0_input_mm     = 4.000  (requested)
+r0_measured_mm  = 3.087  (actual; ~23% lower due to subharmonic generation)
+tau0_ms         = 19.385
+wind_speed_ms   = 0.050
+wind_angle_deg  = 30.0
+d_sa_m          = 1.5e-4
+wavelength_m    = 6.328e-7
+
+Verification formula: τ0 = 0.314 × r0 / v = 0.314 × 3.087e-3 / 0.05 ≈ 19.4 ms ✓
+
+────────────────────────────────────────────────────────────────────────────────
+8. DATA LOADING RECIPES (Python)
+────────────────────────────────────────────────────────────────────────────────
+
+import numpy as np
+from PIL import Image
+import json
+
+DATA = "C:/Users/Admin/bah2026/shwfs_synthetic"
+
+# Reference and background frames
+ref = np.array(Image.open(f"{DATA}/sh_flat_ref.bmp"))     # (160,160) uint8
+bg  = np.array(Image.open(f"{DATA}/sh_flat_bg.bmp"))      # (160,160) uint8
+
+# A turbulated frame
+f0  = np.array(Image.open(f"{DATA}/frames/frame_0000.bmp"))  # (160,160) uint8
+
+# DM coupling matrix
+C   = np.load(f"{DATA}/dm_coupling.npy")        # (121,121) float32
+
+# Ground truth (all frames)
+sx  = np.load(f"{DATA}/ground_truth/all_slopes_x.npy")   # (200,10,10) float32
+sy  = np.load(f"{DATA}/ground_truth/all_slopes_y.npy")   # (200,10,10) float32
+zk  = np.load(f"{DATA}/ground_truth/all_zernike.npy")    # (200,21) float32
+
+# Per-frame JSON
+pf  = json.load(open(f"{DATA}/ground_truth/per_frame.json"))   # list[dict], len=200
+ts  = json.load(open(f"{DATA}/ground_truth/turbulence_stats.json"))
+
+================================================================================

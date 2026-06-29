@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/ venv/ env/
+*.egg-info/ dist/ build/
+.pytest_cache/ .mypy_cache/
+
+# ML artifacts — keep precomputed/*.npy (pipeline matrices, ~1 MB)
+# but exclude large per-frame outputs
+shwfs_pipeline/outputs/phase_maps/
+shwfs_pipeline/outputs/actuator_maps/
+shwfs_pipeline/outputs/figures/
+
+# OS / Editors
+.DS_Store Thumbs.db
+.idea/ .vscode/*.json
+*.swp *~
+
+# Secrets
+.env
+.env.*
+!.env.example

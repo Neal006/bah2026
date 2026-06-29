@@ -1,0 +1,24 @@
+{
+  "r0_est_mm": 2.8946,
+  "r0_gt_mm": 3.0869999999999997,
+  "r0_err_pct": 6.23,
+  "tau0_est_ms": 18.1782,
+  "tau0_gt_ms": 19.384999999999998,
+  "tau0_err_pct": 6.23,
+  "phase_rms_mean": 0.12845,
+  "phase_rms_std": 0.0294,
+  "slope_corr": 0.7829,
+  "zk_corr_mean_z2_z21": 0.5979,
+  "latency_p95_ms": 2.6050500005112553,
+  "sat_per_frame": 0.0,
+  "slope_gain": 6.0781,
+  "checks": {
+    "r0_within_30pct": true,
+    "tau0_within_50pct": true,
+    "phase_rms_in_range": true,
+    "slope_corr_gt_0.75": true,
+    "latency_under_5ms": true,
+    "zero_saturation": true
+  },
+  "all_pass": true
+}

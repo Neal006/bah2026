@@ -1,0 +1,28 @@
+Based on the file you provided, **image_165be3.png**, here is the transcribed text and a description of the contextual information it contains.
+
+## Images Representing the Problem Statement
+
+The image contains a slide with two main figures illustrating how a wavefront sensor works.
+
+### Figure 1: Schematic Diagram
+
+**Description:**
+This figure contrasts two scenarios showing how a wavefront interacts with a lenslet array and a detector to form an image.
+
+* **Top Scenario (Undistorted):** A flat, straight **Wave-front** passes through a vertical array of **Lenslets**. The light converges onto a **Detector**, resulting in an **Image** consisting of a perfectly regular, equally spaced grid of spots.
+* **Bottom Scenario (Distorted):** A wavy, distorted **Wave-front** passes through the same **Lenslets**. The light focuses unevenly onto the **Detector**, resulting in an **Image** where the spots are scattered and deviate from the regular grid pattern.
+
+**Caption Text:**
+
+> *Figure 1: Schematic showing spot deviation on detector due to distorted wavefront. Image courtesy: [http://www.ctio.noirlab.edu/~atokovin/tutorial/part3/wfs.html*](https://www.google.com/search?q=http://www.ctio.noirlab.edu/~atokovin/tutorial/part3/wfs.html)
+
+---
+
+### Figure 2: Sensor Frame
+
+**Description:**
+This side displays a real or simulated black-and-white output frame from a sensor. It shows a grid of bright, slightly blurry spots against a dark background, representing the actual data captured by the detector setup shown in Figure 1.
+
+**Caption Text:**
+
+> *Figure 2: Example of a wavefront sensor (WFS) frame*
