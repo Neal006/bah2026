@@ -240,15 +240,21 @@ with col3:
     sy_a = d["sy_map"][data["active"]]
     mag  = np.sqrt(sx_a**2 + sy_a**2)
     yi, xi = np.mgrid[0:10, 0:10]
-    ax_q.quiver(
+    q = ax_q.quiver(
         xi[data["active"]], yi[data["active"]],
         sx_a / max(mag.max(), 1e-6),
         sy_a / max(mag.max(), 1e-6),
-        mag, cmap="viridis", scale=8, width=0.018, pivot="mid"
+        mag, cmap="viridis", scale=8, width=0.018, pivot="mid",
+        clim=(0, mag.max() if mag.max() > 0 else 1),
     )
+    cb = fig_q.colorbar(q, ax=ax_q, fraction=0.04, pad=0.02)
+    cb.set_label("rad/m", color="#aaaaaa", fontsize=7)
+    cb.ax.tick_params(colors="#aaaaaa", labelsize=6)
     ax_q.set_xlim(-0.7, 9.7); ax_q.set_ylim(9.7, -0.7)
     ax_q.set_aspect("equal")
     ax_q.set_title("P3  Slope Vectors", color="white", fontsize=9)
+    ax_q.set_xlabel("Lenslet col", color="#aaaaaa", fontsize=7)
+    ax_q.set_ylabel("Lenslet row", color="#aaaaaa", fontsize=7)
     ax_q.tick_params(colors="#aaaaaa", labelcolor="#aaaaaa", labelsize=7)
     for sp in ax_q.spines.values(): sp.set_edgecolor("#444")
     st.pyplot(fig_q, use_container_width=True)
@@ -264,51 +270,56 @@ with col4:
     vmax = max(float(np.abs(d["phase"]).max()), 0.01)
     fig_p4 = go.Figure(go.Heatmap(
         z=d["phase"].tolist(), colorscale="RdBu", zmid=0, zmin=-vmax, zmax=vmax,
-        colorbar=dict(title="rad", thickness=12, len=0.8,
-                      tickfont=dict(color="white"), titlefont=dict(color="white"))
+        colorbar=dict(title=dict(text="rad", font=dict(color="white")),
+                      thickness=12, len=0.8, tickfont=dict(color="white"))
     ))
     fig_p4.update_layout(
         title=dict(text="P4  Wavefront Phase Map", font=dict(color="white"), x=0.5),
         height=260, margin=dict(l=0, r=0, t=35, b=0),
         paper_bgcolor="#1a1d24", plot_bgcolor="#1a1d24",
         font=dict(color="white"),
+        xaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+        yaxis=dict(showticklabels=False, showgrid=False, zeroline=False,
+                   autorange="reversed"),
     )
     st.plotly_chart(fig_p4, use_container_width=True, key="p4")
 
 with col5:
     z_idx = list(range(1, 22))
-    gt_a_c  = np.clip(d["gt_a"], -0.5, 0.5).tolist()
-    est_a_c = np.clip(d["a"],    -0.5, 0.5).tolist()
     fig_p5 = go.Figure([
-        go.Bar(x=z_idx, y=gt_a_c,  name="GT",  marker_color="#ff9944",
-               opacity=0.85, width=0.35, offset=-0.17),
-        go.Bar(x=z_idx, y=est_a_c, name="Est", marker_color="#4488ff",
-               opacity=0.85, width=0.35, offset=0.17),
+        go.Bar(x=z_idx, y=d["gt_a"].tolist(), name="GT",  marker_color="#ff9944", opacity=0.85),
+        go.Bar(x=z_idx, y=d["a"].tolist(),    name="Est", marker_color="#4488ff", opacity=0.85),
     ])
+    ymax5 = max(float(np.abs(d["gt_a"]).max()), float(np.abs(d["a"]).max()), 0.05)
     fig_p5.update_layout(
-        title=dict(text="P5  Zernike Z1-Z21", font=dict(color="white"), x=0.5),
-        height=260, barmode="overlay", margin=dict(l=0, r=0, t=35, b=30),
+        title=dict(text="P5  Zernike Z1–Z21", font=dict(color="white"), x=0.5),
+        height=260, barmode="group", margin=dict(l=0, r=0, t=35, b=30),
         paper_bgcolor="#1a1d24", plot_bgcolor="#1a1d24",
         font=dict(color="white"),
-        legend=dict(x=0.78, y=1, bgcolor="#2a2d34",
-                    font=dict(color="white")),
-        yaxis=dict(title="rad", gridcolor="#333"),
-        xaxis=dict(title="Noll index", gridcolor="#333"),
+        legend=dict(x=0.75, y=1, bgcolor="#2a2d34", font=dict(color="white")),
+        yaxis=dict(title="rad", range=[-ymax5 * 1.15, ymax5 * 1.15], gridcolor="#333"),
+        xaxis=dict(title="Noll index", dtick=2, gridcolor="#333"),
+        bargap=0.15, bargroupgap=0.05,
     )
     st.plotly_chart(fig_p5, use_container_width=True, key="p5")
 
 with col6:
-    dm_nm = (d["v_cmd"].reshape(11, 11) * 1e9).tolist()
+    dm_arr = d["v_cmd"].reshape(11, 11) * 1e9
+    dm_sym = max(float(np.abs(dm_arr).max()), 0.1)
     fig_p6 = go.Figure(go.Heatmap(
-        z=dm_nm, colorscale="RdBu", zmid=0,
-        colorbar=dict(title="nm", thickness=12, len=0.8,
-                      tickfont=dict(color="white"), titlefont=dict(color="white"))
+        z=dm_arr.tolist(), colorscale="RdBu", zmid=0,
+        zmin=-dm_sym, zmax=dm_sym,
+        colorbar=dict(title=dict(text="nm", font=dict(color="white")),
+                      thickness=12, len=0.8, tickfont=dict(color="white"))
     ))
     fig_p6.update_layout(
         title=dict(text="P6  DM Actuators (nm)", font=dict(color="white"), x=0.5),
         height=260, margin=dict(l=0, r=0, t=35, b=0),
         paper_bgcolor="#1a1d24", plot_bgcolor="#1a1d24",
         font=dict(color="white"),
+        xaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+        yaxis=dict(showticklabels=False, showgrid=False, zeroline=False,
+                   autorange="reversed"),
     )
     st.plotly_chart(fig_p6, use_container_width=True, key="p6")
 
@@ -316,7 +327,7 @@ st.markdown("---")
 
 # ── Row 3: Performance metrics ────────────────────────────────────────────────
 st.markdown("#### Row 3 — Performance & Turbulence")
-col7, col8, col9, col10 = st.columns(4)
+col7, col8, col9 = st.columns(3)
 
 _LAYOUT_BASE = dict(
     height=220, margin=dict(l=0, r=0, t=35, b=30),
@@ -337,7 +348,7 @@ with col7:
     fig_p7.update_layout(
         title=dict(text="P7  Phase RMS", font=dict(color="white"), x=0.5),
         showlegend=False,
-        yaxis=dict(title="rad", range=[0, 0.7], gridcolor="#333"),
+        yaxis=dict(title="rad", range=[0, max(gt_phase_rms * 1.3, 0.1)], gridcolor="#333"),
         xaxis=dict(title="last 50 frames", gridcolor="#333"),
         **{k: v for k, v in _LAYOUT_BASE.items() if k not in ("yaxis", "xaxis")},
     )
@@ -354,7 +365,7 @@ with col8:
     fig_p8.update_layout(
         title=dict(text="P8  r₀ Estimate", font=dict(color="white"), x=0.5),
         showlegend=False,
-        yaxis=dict(title="mm", range=[0, 8], gridcolor="#333"),
+        yaxis=dict(title="mm", range=[0, GT_R0_MM * 2.0], gridcolor="#333"),
         xaxis=dict(title="last 50 frames", gridcolor="#333"),
         **{k: v for k, v in _LAYOUT_BASE.items() if k not in ("yaxis", "xaxis")},
     )
@@ -372,27 +383,29 @@ with col9:
     fig_p9.update_layout(
         title=dict(text="P9  Pipeline Latency", font=dict(color="white"), x=0.5),
         showlegend=False,
-        yaxis=dict(title="ms", range=[0, 10], gridcolor="#333"),
+        yaxis=dict(title="ms", range=[0, 7], gridcolor="#333"),
         xaxis=dict(title="last 50 frames", gridcolor="#333"),
         **{k: v for k, v in _LAYOUT_BASE.items() if k not in ("yaxis", "xaxis")},
     )
     st.plotly_chart(fig_p9, use_container_width=True, key="p9")
 
-with col10:
-    st.markdown("**P10  Live Metrics**")
-    r0_delta  = d["r0_mm"] - GT_R0_MM
-    tau0_delta = d["tau0_ms"] - GT_TAU0_MS
-    st.metric("τ₀",         f"{d['tau0_ms']:.1f} ms",
-              delta=f"{tau0_delta:+.1f} ms vs GT",
-              delta_color="off")
-    st.metric("r₀",         f"{d['r0_mm']:.3f} mm",
-              delta=f"{r0_delta:+.3f} mm vs GT",
-              delta_color="off")
-    st.metric("Saturation",  f"{d['sat']} / 121")
-    st.metric("Latency",     f"{d['lat_ms']:.2f} ms",
-              delta="under budget" if d["lat_ms"] < 5.0 else "OVER BUDGET",
-              delta_color="normal" if d["lat_ms"] < 5.0 else "inverse")
-    st.metric("Slope corr",  f"{d['corr']:.3f}")
+
+st.markdown("---")
+
+# ── Row 4: Live scalar metrics (horizontal) ───────────────────────────────────
+st.markdown("#### Live Metrics")
+r0_delta   = d["r0_mm"]  - GT_R0_MM
+tau0_delta = d["tau0_ms"] - GT_TAU0_MS
+mc1, mc2, mc3, mc4, mc5 = st.columns(5)
+mc1.metric("Coherence Time τ₀", f"{d['tau0_ms']:.1f} ms",
+           delta=f"{tau0_delta:+.1f} ms vs GT", delta_color="off")
+mc2.metric("Fried Parameter r₀", f"{d['r0_mm']:.3f} mm",
+           delta=f"{r0_delta:+.3f} mm vs GT", delta_color="off")
+mc3.metric("DM Saturation", f"{d['sat']} / 121 actuators")
+mc4.metric("Pipeline Latency", f"{d['lat_ms']:.2f} ms",
+           delta="under budget" if d["lat_ms"] < 5.0 else "OVER BUDGET",
+           delta_color="normal" if d["lat_ms"] < 5.0 else "inverse")
+mc5.metric("Slope Correlation", f"{d['corr']:.3f}")
 
 # ── Animation loop ────────────────────────────────────────────────────────────
 if st.session_state.playing:

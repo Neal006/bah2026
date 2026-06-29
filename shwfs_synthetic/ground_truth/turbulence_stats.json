@@ -1,0 +1,9 @@
+{
+  "r0_input_mm": 4.0,
+  "r0_measured_mm": 3.087,
+  "tau0_measured_ms": 19.385,
+  "wind_speed_ms": 0.05,
+  "wind_angle_deg": 30.0,
+  "d_sa_m": 0.00015,
+  "wavelength_m": 6.328e-07
+}
