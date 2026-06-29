@@ -10,6 +10,7 @@ Unit note:
   Empirical constant K_FRIED is calibrated from the GT dataset:
       sigma2 [(rad/m)^2] = K_FRIED * (d_sa/r0)^{5/3}
 """
+from __future__ import annotations
 import numpy as np
 import config
 
